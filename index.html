@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCIPL S8 极速刷圈模拟系统 - 云端版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d2ff;
+            --primary-glow: #00d2ff88;
+            --danger: #ff2a5f;
+            --danger-glow: #ff2a5f88;
+            --success: #00ff88;
+            --warning: #ffb703;
+            --bg-dark: #0a0a0c;
+            --panel-bg: rgba(20, 20, 25, 0.85);
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', 'Segoe UI', Tahoma, sans-serif;
+            background: radial-gradient(circle at center, #1a1a24 0%, var(--bg-dark) 100%);
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        @keyframes pulseGlow {
+            0% { text-shadow: 0 0 10px var(--primary-glow); }
+            50% { text-shadow: 0 0 30px var(--primary), 0 0 10px var(--primary); }
+            100% { text-shadow: 0 0 10px var(--primary-glow); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* 标题页 */
+        #title-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)" /></svg>');
+        }
+
+        .main-title {
+            font-family: 'Teko', sans-serif;
+            font-size: 5rem;
+            margin: 0;
+            line-height: 1;
+            letter-spacing: 2px;
+            color: #fff;
+            animation: pulseGlow 3s infinite alternate;
+            text-transform: uppercase;
+        }
+
+        .sub-title {
+            font-size: 1.5rem;
+            color: #8892b0;
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: 4px;
+        }
+
+        /* 玩家登录区 */
+        .player-auth {
+            background: var(--panel-bg);
+            padding: 18px 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,210,255,0.2);
+            margin-bottom: 15px;
+            max-width: 500px;
+            width: 90%;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .player-auth input {
+            flex: 1;
+            padding: 10px 14px;
+            font-size: 1rem;
+            background: #111;
+            color: #fff;
+            border: 2px solid #444;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .player-auth input:focus { border-color: var(--primary); }
+        .player-auth .btn-auth {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(45deg, #0052d4, #4364f7);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .player-auth .btn-auth:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(67,100,247,0.4); }
+        .player-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--success);
+            font-size: 0.9rem;
+        }
+        .player-status-bar .dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 6px var(--success); }
+        #logout-btn { color: #888; cursor: pointer; font-size: 0.8rem; text-decoration: underline; }
+        #logout-btn:hover { color: var(--danger); }
+
+        .track-selector-box {
+            background: var(--panel-bg);
+            padding: 30px 40px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            background: #111;
+            color: var(--primary);
+            border: 2px solid #444;
+            border-radius: 8px;
+            outline: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        select:focus { border-color: var(--primary); }
+
+        .pb-info {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            color: #aaa;
+        }
+        #pb-display {
+            color: var(--success);
+            font-family: 'Teko', sans-serif;
+            font-size: 1.8rem;
+            font-weight: normal;
+        }
+
+        .btn-launch {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.5rem;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: 900;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: linear-gradient(45deg, #0052d4, #4364f7, #6fb1fc);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(67, 100, 247, 0.4);
+        }
+        .btn-launch:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(67, 100, 247, 0.6); }
+
+        .btn-purple { background: linear-gradient(45deg, #7b2cbf, #9d4edd); color: #fff; width: 100%; margin-top: 15px; }
+        .btn-purple:hover { box-shadow: 0 5px 15px rgba(157, 78, 221, 0.4); transform: translateY(-2px); }
+
+        /* 排行榜按钮 */
+        .btn-leaderboard {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(45deg, #b8860b, #ffd700);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            margin-top: 10px;
+            transition: all 0.2s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .btn-leaderboard:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,215,0,0.4); }
+        .btn-leaderboard-secondary {
+            background: rgba(255,215,0,0.1);
+            color: #ffd700;
+            border: 1px solid rgba(255,215,0,0.3);
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 8px;
+            transition: all 0.2s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .btn-leaderboard-secondary:hover { background: rgba(255,215,0,0.2); transform: translateY(-2px); }
+
+        /* 排行榜弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-panel {
+            background: linear-gradient(160deg, #141419, #1a1a24);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            width: 95%;
+            max-width: 780px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        .modal-panel.wide { max-width: 1000px; }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--primary);
+            text-shadow: 0 0 15px rgba(0,210,255,0.3);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+        .modal-body::-webkit-scrollbar { width: 5px; }
+        .modal-body::-webkit-scrollbar-track { background: transparent; }
+        .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        /* 排行榜表格 */
+        .lb-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        .lb-table th {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            color: #888;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .lb-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .lb-table .rank-col { width: 60px; text-align: center; }
+        .lb-table .time-col { width: 120px; text-align: right; font-family: 'Teko', sans-serif; font-size: 1.2rem; }
+        .lb-table .score-col { width: 120px; text-align: right; font-family: 'Teko', sans-serif; font-size: 1.3rem; }
+        .lb-table .detail-col { width: 80px; text-align: center; }
+        .lb-table tr:hover { background: rgba(255,255,255,0.03); }
+        .lb-table .rank-1 { color: #ffd700; font-weight: bold; font-size: 1.1rem; }
+        .lb-table .rank-2 { color: #c0c0c0; font-weight: bold; }
+        .lb-table .rank-3 { color: #cd7f32; font-weight: bold; }
+        .lb-table .my-row { background: rgba(0,210,255,0.08) !important; }
+        .lb-table .my-row td { border-bottom-color: rgba(0,210,255,0.2); }
+
+        .rank-badge {
+            display: inline-block;
+            width: 28px; height: 28px;
+            line-height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* 赛季详情展开 */
+        .expand-btn {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #aaa;
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .expand-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+        .detail-row { display: none; }
+        .detail-row.active { display: table-row; }
+        .detail-row td {
+            padding: 0 10px 15px 40px;
+            background: rgba(0,0,0,0.3);
+        }
+        .detail-inner-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .detail-inner-table th {
+            padding: 6px 8px;
+            color: #888;
+            font-size: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .detail-inner-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .detail-inner-table .track-score { color: var(--primary); font-weight: bold; }
+
+        .lb-empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        .lb-loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        /* Toast 通知 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            max-width: 360px;
+        }
+        .toast-success { background: #0a3a1a; border: 1px solid var(--success); color: var(--success); }
+        .toast-error { background: #3a0a0a; border: 1px solid var(--danger); color: var(--danger); }
+        .toast-info { background: #0a1a3a; border: 1px solid var(--primary); color: var(--primary); }
+
+        /* 云端同步状态 */
+        .cloud-status {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 4px;
+        }
+        .cloud-status.synced { color: var(--success); }
+        .cloud-status.syncing { color: var(--warning); }
+        .cloud-status.error { color: var(--danger); }
+
+        /* 模拟页 */
+        #sim-screen {
+            display: none;
+            height: 100vh;
+            box-sizing: border-box;
+            padding: 20px;
+            position: relative;
+        }
+        .sim-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background: var(--panel-bg);
+            border-bottom: 2px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .track-name-display {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 0;
+        }
+        #sim-status {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #aaa;
+        }
+        .sim-content {
+            display: flex;
+            justify-content: space-between;
+            height: calc(100vh - 120px);
+            gap: 20px;
+        }
+        .main-display {
+            flex: 1;
+            background: var(--panel-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .time-box { text-align: center; }
+        .time-label {
+            font-size: 1.5rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: -10px;
+        }
+        #total-time {
+            font-family: 'Teko', sans-serif;
+            font-size: 10rem;
+            font-weight: 600;
+            line-height: 1;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255,255,255,0.2);
+            font-variant-numeric: tabular-nums;
+        }
+        .dnf-mode {
+            color: var(--danger) !important;
+            text-shadow: 0 0 30px var(--danger-glow) !important;
+            font-size: 8rem !important;
+        }
+        .diff-panel {
+            margin-top: 20px;
+            padding: 15px 40px;
+            border-radius: 50px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .diff-label { font-size: 1.2rem; color: #aaa; }
+        #diff-time {
+            font-family: 'Teko', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+        .diff-green { color: var(--success); text-shadow: 0 0 10px rgba(0,255,136,0.4); }
+        .diff-red { color: var(--danger); text-shadow: 0 0 10px rgba(255,42,95,0.4); }
+        .control-panel {
+            position: absolute;
+            bottom: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-restart { background: #333; color: white; border: 1px solid #555; }
+        .btn-restart:hover { background: #444; border-color: #666; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-warning:hover { background: #e0a000; }
+        .btn-danger { background: #222; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 历史面板 */
+        .history-panel {
+            width: 480px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        .history-header {
+            background: #111;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-bottom: 2px solid rgba(255,255,255,0.15);
+            text-align: center;
+            color: #ffff55;
+            letter-spacing: 1px;
+        }
+        #history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        #history-list::-webkit-scrollbar { width: 4px; }
+        #history-list::-webkit-scrollbar-track { background: transparent; }
+        #history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .history-item {
+            background: transparent;
+            border: none;
+            padding: 2px 0;
+            animation: slideIn 0.25s ease-out;
+            font-family: 'Consolas', 'Courier New', Monaco, monospace;
+            font-size: 0.98rem;
+            line-height: 1.5;
+            color: #ffffff;
+            text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.85);
+            word-break: break-all;
+        }
+        .mc-time-bracket { color: #55ffff; }
+        .mc-name-bracket { color: #ffff55; font-weight: bold; }
+        .mc-point { color: #ffffff; }
+        .mc-time-val { color: #ffff55; font-weight: bold; }
+        .mc-diff-green { color: #55ff55; font-weight: bold; }
+        .mc-diff-red { color: #ff5555; font-weight: bold; }
+        .error-detail { color: #ff5555; font-size: 0.9rem; margin-top: 2px; padding-left: 20px; font-family: 'Consolas', 'Courier New', Monaco, monospace; text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.85); }
+        .dnf-detail { color: #ff5555; font-weight: bold; font-size: 0.92rem; margin-top: 2px; padding-left: 20px; font-family: 'Consolas', 'Courier New', Monaco, monospace; text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.85); }
+
+        /* 赛季页 */
+        #season-screen {
+            display: none;
+            height: 100vh;
+            box-sizing: border-box;
+            padding: 20px;
+            overflow-y: auto;
+            background: radial-gradient(ellipse at top, rgba(157, 78, 221, 0.12) 0%, transparent 60%),
+                        radial-gradient(ellipse at bottom, rgba(0, 255, 136, 0.06) 0%, transparent 60%);
+        }
+        .season-header {
+            background: linear-gradient(135deg, rgba(20, 20, 25, 0.95), rgba(40, 25, 60, 0.9));
+            padding: 20px 30px;
+            border-radius: 16px;
+            border: 1px solid rgba(157, 78, 221, 0.3);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+        }
+        .season-day {
+            font-size: 2.5rem;
+            color: #fff;
+            font-weight: bold;
+            font-family: 'Teko', sans-serif;
+            text-shadow: 0 0 20px rgba(157, 78, 221, 0.5);
+            letter-spacing: 2px;
+        }
+        .season-day span { color: var(--primary); }
+        .season-rem-laps { color: #aaa; margin-top: 5px; font-size: 1.1rem; }
+        .season-rem-laps strong { color: #fff; }
+        .season-track-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .season-track-card {
+            background: linear-gradient(145deg, rgba(20,20,30,0.95), rgba(30,20,40,0.9));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: left;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .season-track-card:hover {
+            border-color: rgba(157, 78, 221, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(157, 78, 221, 0.2);
+        }
+        .season-track-card h3 { margin: 0 0 10px 0; color: #fff; font-size: 1.15rem; }
+        .season-track-card input[type="number"] {
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(157, 78, 221, 0.3);
+            color: var(--primary);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .season-track-card input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(67, 100, 247, 0.2);
+        }
+        .season-summary {
+            background: linear-gradient(145deg, rgba(20,20,30,0.95), rgba(30,20,45,0.9));
+            padding: 25px 30px;
+            border-radius: 16px;
+            margin-top: 20px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-family: 'Consolas', monospace;
+            transition: background 0.2s;
+        }
+        .score-row:hover { background: rgba(255,255,255,0.03); }
+        .score-row.total {
+            font-weight: bold;
+            color: var(--success);
+            font-size: 1.3rem;
+            border-bottom: none;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid rgba(0, 255, 136, 0.2);
+        }
+        .season-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .btn-season {
+            padding: 12px 28px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .btn-season-save { background: linear-gradient(135deg, #7b2cbf, #9d4edd); color: #fff; box-shadow: 0 4px 15px rgba(157, 78, 221, 0.3); }
+        .btn-season-save:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(157, 78, 221, 0.5); }
+        .btn-season-load { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+        .btn-season-load:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .btn-season-lb {
+            background: linear-gradient(135deg, #b8860b, #ffd700);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(255,215,0,0.2);
+            font-weight: bold;
+            padding: 12px 28px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .btn-season-lb:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,215,0,0.4); }
+
+        @media (max-width: 768px) {
+            .main-title { font-size: 3rem; }
+            .sim-content { flex-direction: column; }
+            .history-panel { width: 100%; height: 300px; }
+            #total-time { font-size: 5rem; }
+            .modal-panel { width: 98%; max-height: 90vh; }
+            .season-track-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toast 通知 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- 排行榜弹窗（赛道） -->
+    <div class="modal-overlay" id="leaderboard-modal">
+        <div class="modal-panel">
+            <div class="modal-header">
+                <h2 id="lb-title">🏆 赛道排行榜</h2>
+                <button class="modal-close" onclick="closeLeaderboard()">✕</button>
+            </div>
+            <div class="modal-body" id="lb-body"></div>
+        </div>
+    </div>
+
+    <!-- 赛季排行榜弹窗 -->
+    <div class="modal-overlay" id="season-lb-modal">
+        <div class="modal-panel wide">
+            <div class="modal-header">
+                <h2>🏆 赛季总分排行榜</h2>
+                <button class="modal-close" onclick="closeSeasonLeaderboard()">✕</button>
+            </div>
+            <div class="modal-body" id="season-lb-body"></div>
+        </div>
+    </div>
+
+    <!-- ====== 标题页 ====== -->
+    <div id="title-screen">
+        <h1 class="main-title">DCIPL S8</h1>
+        <div class="sub-title">极速刷圈模拟系统 (PRO) — 云端版</div>
+
+        <!-- 玩家登录 -->
+        <div class="player-auth" id="player-auth-area">
+            <input type="text" id="username-input" placeholder="输入你的玩家名称" maxlength="20">
+            <button class="btn-auth" id="btn-auth-action" onclick="handleAuth()">登入</button>
+        </div>
+        <div class="player-auth" id="player-status-area" style="display:none;">
+            <div class="player-status-bar">
+                <span class="dot"></span>
+                <span>已登录：<strong id="display-username"></strong></span>
+                <span id="logout-btn" onclick="logoutPlayer()">[切换账号]</span>
+            </div>
+        </div>
+
+        <div class="track-selector-box">
+            <h2 style="margin-top:0; color:#fff; font-size: 1.3rem;">选择赛道</h2>
+            <select id="track-select" onchange="updatePBDisplay()">
+                <option value="极地雪堡">极地雪堡 (一圈)</option>
+                <option value="海岸冰场">海岸冰场 (两圈)</option>
+                <option value="世纪天城">世纪天城 (两圈)</option>
+                <option value="层级教学关卡">层级教学关卡 (两圈)</option>
+                <option value="宇宙城科技区">宇宙城科技区 (一圈)</option>
+                <option value="极地破碎雪原">极地破碎雪原 (两圈)</option>
+                <option value="宇宙城热电站">宇宙城热电站 (两圈)</option>
+                <option value="恶地矿山采集场">恶地矿山采集场 (一圈)</option>
+                <option value="鹦特拉格斯">鹦特拉格斯 (一圈)</option>
+                <option value="炼狱祭坛">炼狱祭坛 (一圈)</option>
+                <option value="极地冰封王座">极地冰封王座 (一圈)</option>
+                <option value="和风山岫">和风山岫 (两圈)</option>
+            </select>
+
+            <div class="pb-info">
+                个人最佳纪录 (PB)<br>
+                <span id="pb-display">无纪录</span>
+            </div>
+
+            <button class="btn-launch" onclick="startSim()">LAUNCH SIMULATION</button>
+            <button class="btn btn-purple" onclick="openSeasonMode()">进入快速赛季模式</button>
+            <button class="btn-leaderboard" onclick="viewTrackLeaderboard()">🏆 本赛道个人排行榜</button>
+            <button class="btn-leaderboard-secondary" onclick="viewSeasonLeaderboard()">🏆 赛季总分排行榜</button>
+        </div>
+    </div>
+
+    <!-- ====== 赛季页 ====== -->
+    <div id="season-screen">
+        <div class="season-header">
+            <div>
+                <div class="season-day" id="season-day-display">DAY <span>1</span> / 8</div>
+                <div class="season-rem-laps">今日剩余可用刷圈次数: <strong id="rem-laps-count">100</strong></div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-season-lb" onclick="viewSeasonLeaderboard()">🏆 赛季排行榜</button>
+                <button class="btn btn-danger" onclick="exitSeason()">返回主界面</button>
+            </div>
+        </div>
+
+        <div id="season-setup-area">
+            <h2 style="text-align:left; color:var(--primary); text-shadow:0 0 20px rgba(67,100,247,0.3); margin-bottom:15px;">✨ 分配今日刷圈计划 (共 11 条赛道)</h2>
+            <div class="season-track-grid" id="season-track-grid"></div>
+            <button class="btn-launch" style="background: linear-gradient(45deg, #7b2cbf, #9d4edd); box-shadow: 0 5px 20px rgba(157, 78, 221, 0.4);" onclick="executeSeasonDay()">⚡ 执行今日模拟</button>
+            <div class="season-actions">
+                <button class="btn-season btn-season-save" onclick="saveCurrentAllocation()">📀 保存为默认分配</button>
+                <button class="btn-season btn-season-load" onclick="loadSavedAllocation()">🗒️ 调用默认分配</button>
+            </div>
+        </div>
+
+        <div id="season-summary-area" style="display:none;">
+            <div class="season-summary">
+                <h2 style="color:var(--primary); margin-top:0; font-size:1.8rem; text-shadow:0 0 20px rgba(67,100,247,0.4);">🏆 赛季成绩档案簿</h2>
+                <div id="season-scores-list"></div>
+                <div id="season-upload-status" style="margin-top:15px;"></div>
+                <button class="btn-launch" style="margin-top:20px;" onclick="resetSeason()">🔄 重置赛季</button>
+                <button class="btn-season-lb" style="margin-top:10px; width:100%;" onclick="viewSeasonLeaderboard()">🏆 查看赛季总排行榜</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== 模拟页 ====== -->
+    <div id="sim-screen">
+        <div class="sim-header">
+            <h2 class="track-name-display" id="header-track-name">赛道名称</h2>
+            <div>
+                <div id="sim-status">SYSTEM READY</div>
+                <div class="cloud-status" id="cloud-status"></div>
+            </div>
+        </div>
+        <div class="sim-content">
+            <div class="main-display">
+                <div class="time-box">
+                    <div class="time-label">TOTAL TIME</div>
+                    <div id="total-time">0.00</div>
+                </div>
+                <div class="diff-panel" id="diff-panel" style="opacity: 0;">
+                    <div class="diff-label">与 PB 对比</div>
+                    <div id="diff-time">--</div>
+                </div>
+                <div class="control-panel">
+                    <button class="btn btn-warning" id="btn-pause" onclick="togglePause()">暂停</button>
+                    <button class="btn btn-restart" onclick="restartSim()">重新起跑</button>
+                    <button class="btn btn-danger" onclick="exitSim()">返回总部</button>
+                </div>
+            </div>
+            <div class="history-panel">
+                <div class="history-header">TELEMETRY DATA (分段数据)</div>
+                <div id="history-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ═══════════════════════════════════════════════
+    // 🔧 Supabase 配置 — 部署时改成你自己的（共2个值）
+    // ═══════════════════════════════════════════════
+    const SUPABASE_URL = 'https://edwrgzguymkdjrlzkdkq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkd3Jnemd1eW1rZGpybHprZGtxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk4NTU1MiwiZXhwIjoyMTAwNTYxNTUyfQ.0F3fB843vsqtGFU8ewNn7Bia-_K4v5QCIWwR6sGUx-4';
+
+    // Supabase REST API 封装（不需要客户端库）
+    function supabaseQuery(path, options = {}) {
+        const { method = 'GET', body } = options;
+        const headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json'
+        };
+        return fetch(SUPABASE_URL + '/rest/v1' + path, { method, headers, body: body ? JSON.stringify(body) : undefined })
+            .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.message || '请求失败'); }));
+    }
+
+    function supabaseRpc(fnName, params) {
+        const headers = {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json'
+        };
+        return fetch(SUPABASE_URL + '/rest/v1/rpc/' + fnName, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(params)
+        }).then(r => r.ok ? r.text().then(t => t ? JSON.parse(t) : null) : r.json().then(e => { throw new Error(e.message || '请求失败'); }));
+    }
+
+    // 生成随机密钥
+    function generateSecret(len) {
+        const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+        const arr = new Uint8Array(len);
+        crypto.getRandomValues(arr);
+        let result = '';
+        for (let i = 0; i < len; i++) result += chars[arr[i] % chars.length];
+        return result;
+    }
+
+    // ═══════════════════════════════════════════════
+    // 玩家身份管理
+    // ═══════════════════════════════════════════════
+    let playerState = {
+        playerId: null,
+        secretKey: null,
+        username: null,
+        isLoggedIn: false
+    };
+
+    function loadPlayerState() {
+        try {
+            const saved = localStorage.getItem('dcipl_s8_player');
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.playerId && data.secretKey && data.username) {
+                    playerState = data;
+                    playerState.isLoggedIn = true;
+                }
+            }
+        } catch (e) {}
+    }
+
+    function savePlayerState() {
+        localStorage.setItem('dcipl_s8_player', JSON.stringify({
+            playerId: playerState.playerId,
+            secretKey: playerState.secretKey,
+            username: playerState.username
+        }));
+    }
+
+    function updatePlayerUI() {
+        const authArea = document.getElementById('player-auth-area');
+        const statusArea = document.getElementById('player-status-area');
+        if (playerState.isLoggedIn) {
+            authArea.style.display = 'none';
+            statusArea.style.display = 'flex';
+            document.getElementById('display-username').textContent = playerState.username;
+        } else {
+            authArea.style.display = 'flex';
+            statusArea.style.display = 'none';
+        }
+    }
+
+    async function handleAuth() {
+        const input = document.getElementById('username-input');
+        const username = input.value.trim();
+        if (!username) { showToast('请输入玩家名称', 'error'); return; }
+        if (!/^[\w一-鿿]+$/.test(username)) { showToast('名称只能包含中英文、数字、下划线', 'error'); return; }
+
+        const btn = document.getElementById('btn-auth-action');
+        btn.disabled = true;
+        btn.textContent = '...';
+
+        try {
+            const secretKey = generateSecret(40);
+            const data = await supabaseQuery('/players', {
+                method: 'POST',
+                body: { username, secret_key: secretKey }
+            });
+
+            if (data && data.length > 0) {
+                playerState.playerId = data[0].id;
+                playerState.secretKey = secretKey;
+                playerState.username = username;
+                playerState.isLoggedIn = true;
+                savePlayerState();
+                updatePlayerUI();
+                showToast('欢迎，' + username + '！已连接到云端', 'success');
+            }
+        } catch (e) {
+            if (e.message && e.message.includes('duplicate')) {
+                showToast('该玩家名已被注册，请换一个名字', 'error');
+            } else {
+                showToast('网络连接失败，请稍后重试', 'error');
+            }
+        }
+        btn.disabled = false;
+        btn.textContent = '登入';
+    }
+
+    function logoutPlayer() {
+        if (confirm('确定要切换账号吗？')) {
+            playerState = { playerId: null, secretKey: null, username: null, isLoggedIn: false };
+            localStorage.removeItem('dcipl_s8_player');
+            updatePlayerUI();
+            document.getElementById('username-input').value = '';
+            showToast('已退出登录', 'info');
+        }
+    }
+
+    // ═══════════════════════════════════════════════
+    // Toast 通知
+    // ═══════════════════════════════════════════════
+    function showToast(msg, type) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-' + (type || 'info');
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; }, 2500);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ═══════════════════════════════════════════════
+    // 云端 API 调用（全部通过 Supabase）
+    // ═══════════════════════════════════════════════
+    async function uploadPBToCloud(trackName, totalTime, segments) {
+        if (!playerState.isLoggedIn) return null;
+        try {
+            const data = await supabaseRpc('submit_track_pb', {
+                p_player_id: playerState.playerId,
+                p_secret_key: playerState.secretKey,
+                p_track_name: trackName,
+                p_total_time: totalTime,
+                p_segments: segments
+            });
+            return data;
+        } catch (e) { return null; }
+    }
+
+    async function uploadSeasonPBToCloud(totalScore, trackScores, dayCount) {
+        if (!playerState.isLoggedIn) return null;
+        try {
+            const data = await supabaseRpc('submit_season_pb', {
+                p_player_id: playerState.playerId,
+                p_secret_key: playerState.secretKey,
+                p_total_score: totalScore,
+                p_track_scores: trackScores,
+                p_day_count: dayCount
+            });
+            return data;
+        } catch (e) { return null; }
+    }
+
+    async function fetchTrackLeaderboard(trackName) {
+        try {
+            const data = await supabaseQuery(
+                '/track_pbs?select=best_time,updated_at,players!inner(username)&track_name=eq.' + encodeURIComponent(trackName) + '&order=best_time.asc&limit=200'
+            );
+
+            let rank = 0, prevTime = -1, skipCount = 0;
+            const leaderboard = (data || []).map((row, i) => {
+                if (row.best_time !== prevTime) {
+                    rank = rank + 1 + skipCount;
+                    skipCount = 0;
+                } else { skipCount++; }
+                prevTime = row.best_time;
+                return {
+                    rank,
+                    username: row.players.username,
+                    best_time: row.best_time,
+                    updated_at: row.updated_at
+                };
+            });
+            return { track_name: trackName, leaderboard };
+        } catch (e) { return null; }
+    }
+
+    async function fetchSeasonLeaderboard() {
+        try {
+            const data = await supabaseQuery(
+                '/season_pbs?select=username,total_score,track_scores,day_count,created_at&order=total_score.desc&limit=200'
+            );
+
+            let rank = 0, prevScore = Infinity, skipCount = 0;
+            const leaderboard = (data || []).map((row, i) => {
+                if (row.total_score !== prevScore) {
+                    rank = rank + 1 + skipCount;
+                    skipCount = 0;
+                } else { skipCount++; }
+                prevScore = row.total_score;
+                return {
+                    rank,
+                    username: row.username,
+                    total_score: row.total_score,
+                    track_scores: row.track_scores,
+                    day_count: row.day_count,
+                    created_at: row.created_at
+                };
+            });
+            return { leaderboard };
+        } catch (e) { return null; }
+    }
+
+    // ═══════════════════════════════════════════════
+    // 排行榜弹窗
+    // ═══════════════════════════════════════════════
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    async function viewTrackLeaderboard(trackName) {
+        const name = trackName || document.getElementById('track-select').value;
+        document.getElementById('lb-title').textContent = '🏆 ' + name + ' — 排行榜';
+        document.getElementById('lb-body').innerHTML = '<div class="lb-loading">⏳ 加载中...</div>';
+        openModal('leaderboard-modal');
+
+        const data = await fetchTrackLeaderboard(name);
+        if (!data || data.error) {
+            document.getElementById('lb-body').innerHTML = '<div class="lb-empty">⚠️ 无法加载排行榜，请检查网络连接</div>';
+            return;
+        }
+        if (!data.leaderboard || data.leaderboard.length === 0) {
+            document.getElementById('lb-body').innerHTML = '<div class="lb-empty">📭 暂无记录，快来刷圈上传你的第一个 PB 吧！<br><small style="color:#666;">（需要先登入账号并完成刷圈突破PB）</small></div>';
+            return;
+        }
+
+        let html = '<table class="lb-table"><thead><tr><th class="rank-col">排名</th><th>玩家</th><th class="time-col">最佳成绩</th></tr></thead><tbody>';
+        data.leaderboard.forEach(entry => {
+            const rankClass = entry.rank === 1 ? 'rank-1' : entry.rank === 2 ? 'rank-2' : entry.rank === 3 ? 'rank-3' : '';
+            const isMe = playerState.isLoggedIn && playerState.username === entry.username;
+            const rowClass = isMe ? 'my-row' : '';
+            html += '<tr class="' + rowClass + '">';
+            html += '<td class="rank-col ' + rankClass + '"><span class="rank-badge">' + entry.rank + '</span></td>';
+            html += '<td>' + escapeHTML(entry.username) + (isMe ? ' <span style="color:var(--primary);font-size:0.75rem;">(你)</span>' : '') + '</td>';
+            html += '<td class="time-col">' + entry.best_time.toFixed(2) + ' s</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('lb-body').innerHTML = html;
+    }
+
+    function closeLeaderboard() { closeModal('leaderboard-modal'); }
+
+    // ── 赛季排行榜 ──
+    let expandedSeasonRows = {};
+
+    async function viewSeasonLeaderboard() {
+        document.getElementById('season-lb-body').innerHTML = '<div class="lb-loading">⏳ 加载中...</div>';
+        openModal('season-lb-modal');
+
+        const data = await fetchSeasonLeaderboard();
+        if (!data || data.error) {
+            document.getElementById('season-lb-body').innerHTML = '<div class="lb-empty">⚠️ 无法加载排行榜，请检查网络连接</div>';
+            return;
+        }
+        if (!data.leaderboard || data.leaderboard.length === 0) {
+            document.getElementById('season-lb-body').innerHTML = '<div class="lb-empty">📭 暂无赛季记录，完成一个赛季后即可上传！<br><small style="color:#666;">（需要先登入账号并完成赛季）</small></div>';
+            return;
+        }
+
+        const SEASON_TRACKS_LIST = [
+            "恶地矿山采集场", "极地冰封王座", "炼狱祭坛", "层级教学关卡",
+            "宇宙城科技区", "海岸冰场", "世纪天城", "和风山岫",
+            "鹦特拉格斯", "宇宙城热电站", "极地破碎雪原"
+        ];
+        const STANDARDS = {
+            "恶地矿山采集场": 114, "极地冰封王座": 122, "炼狱祭坛": 126,
+            "层级教学关卡": 95, "宇宙城科技区": 55, "海岸冰场": 90,
+            "世纪天城": 98, "和风山岫": 117, "鹦特拉格斯": 83,
+            "宇宙城热电站": 118, "极地破碎雪原": 118
+        };
+
+        let html = '<table class="lb-table"><thead><tr><th class="rank-col">排名</th><th>玩家</th><th class="score-col">赛季总分</th><th class="detail-col">详情</th></tr></thead><tbody>';
+        data.leaderboard.forEach((entry, idx) => {
+            const rankClass = entry.rank === 1 ? 'rank-1' : entry.rank === 2 ? 'rank-2' : entry.rank === 3 ? 'rank-3' : '';
+            const isMe = playerState.isLoggedIn && playerState.username === entry.username;
+            const rowClass = isMe ? 'my-row' : '';
+            const rowId = 'season-row-' + idx;
+            const detailId = 'season-detail-' + idx;
+
+            html += '<tr class="' + rowClass + '" id="' + rowId + '">';
+            html += '<td class="rank-col ' + rankClass + '"><span class="rank-badge">' + entry.rank + '</span></td>';
+            html += '<td>' + escapeHTML(entry.username) + (isMe ? ' <span style="color:var(--primary);font-size:0.75rem;">(你)</span>' : '') + '</td>';
+            html += '<td class="score-col" style="color:var(--primary);">' + entry.total_score.toFixed(2) + '</td>';
+            html += '<td class="detail-col"><button class="expand-btn" onclick="toggleSeasonDetail(\'' + detailId + '\', this)" data-detail-id="' + detailId + '">展开 ▼</button></td>';
+            html += '</tr>';
+
+            // 详情行
+            html += '<tr class="detail-row" id="' + detailId + '"><td colspan="4">';
+            html += '<table class="detail-inner-table"><thead><tr><th>赛道</th><th style="text-align:right;">成绩</th><th style="text-align:right;">标准</th><th style="text-align:right;">得分</th></tr></thead><tbody>';
+            SEASON_TRACKS_LIST.forEach(track => {
+                const ts = entry.track_scores && entry.track_scores[track];
+                const timeStr = ts ? ts.time.toFixed(2) + 's' : '--';
+                const scoreStr = ts ? ts.score.toFixed(2) : '--';
+                const std = STANDARDS[track] || '--';
+                html += '<tr><td>' + track + '</td><td style="text-align:right;font-family:Consolas,monospace;">' + timeStr + '</td><td style="text-align:right;color:#888;">' + std + 's</td><td style="text-align:right;" class="track-score">' + scoreStr + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            html += '</td></tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('season-lb-body').innerHTML = html;
+    }
+
+    function toggleSeasonDetail(detailId, btn) {
+        const row = document.getElementById(detailId);
+        if (!row) return;
+        const isActive = row.classList.contains('active');
+        // 关闭所有展开
+        document.querySelectorAll('.detail-row.active').forEach(r => r.classList.remove('active'));
+        document.querySelectorAll('.expand-btn').forEach(b => b.textContent = '展开 ▼');
+        if (!isActive) {
+            row.classList.add('active');
+            btn.textContent = '收起 ▲';
+        }
+    }
+
+    function closeSeasonLeaderboard() { closeModal('season-lb-modal'); }
+
+    function escapeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ═══════════════════════════════════════════════
+    // 赛道数据 (与原有相同)
+    // ═══════════════════════════════════════════════
+    const RAW_TRACKS = {
+        "极地雪堡": {
+            laps: 1,
+            segments: [
+                { id: "1-1", min: 7.35, max: 7.50, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "1-2(前半)", min: 2.70, max: 3.10, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "1-2(后半)", min: 4.10, max: 4.45, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "1-3", min: 3.95, max: 4.20, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "1-4", min: 3.55, max: 3.70, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "1-5", min: 3.30, max: 3.65, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "1-6", min: 4.75, max: 5.10, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "1-7", min: 7.90, max: 8.20, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] },
+                { id: "终点", min: 7.75, max: 7.85, errRate: 0.02, errs: [{name: "撞墙失误", ranges:[[1.5, 3.0]]}] }
+            ]
+        },
+        "海岸冰场": {
+            laps: 2,
+            segments: [
+                { id: "1-1", min: 3.35, max: 3.60, errRate: 0.30, errs: [{name: "撞墙失误", ranges:[[1,3]]}] },
+                { id: "1-2", min: 2.65, max: 2.90, errRate: 0.12, errs: [{name: "撞墙失误", ranges:[[1,3]]}, {name: "飞跃失误", ranges:[[0.6,1]]}] },
+                { id: "1-3", min: 8.50, max: 8.75, errRate: 0.38, errs: [{name: "撞墙失误", ranges:[[1,3]]}, {name: "飞跃失误", ranges:[[3,5]]}] },
+                { id: "1-4", min: 1.70, max: 1.95, errRate: 0.11, errs: [{name: "撞墙失误", ranges:[[1,3]]}] },
+                { id: "1-5", min: 5.10, max: 5.35, errRate: 0.35, errs: [{name: "撞墙失误", ranges:[[1,3]]}, {name: "单格冰掉桥", ranges:[[3,5]]}] },
+                { id: "1-6", min: 2.50, max: 2.75, errRate: 0.45, errs: [{name: "撞墙失误", ranges:[[1,3]]}, {name: "单格冰掉桥", ranges:[[3,5]]}] },
+                { id: "1-7", min: 8.05, max: 8.30, errRate: 0.26, errs: [{name: "撞墙失误", ranges:[[1,3]]}] },
+                { id: "1-8", min: 4.95, max: 5.20, errRate: 0.27, errs: [{name: "撞墙失误", ranges:[[1,3]]}, {name: "单格冰掉桥", ranges:[[3,5]]}, {name: "飞跃失误", ranges:[[3,5]]}, {name: "双键失误", ranges:[[3,4]]}] },
+                { id: "1-9", min: 2.70, max: 2.95, errRate: 0.05, errs: [{name: "撞墙失误", ranges:[[1,3]]}] },
+                { id: "回到起点", min: 4.50, max: 4.75, errRate: 0.14, errs: [{name: "撞墙失误", ranges:[[1,3]]}] }
+            ],
+            lap2_mods: { "起跑至2-1": { min: 2.85, max: 3.10, errRate: 0.32 }, "2-1至2-2": { min: 2.40, max: 2.65 } }
+        },
+        "世纪天城": {
+            laps: 2,
+            segments: [
+                { id: "1-1", min: 3.45, max: 3.65, errRate: 0.05, errs: [{name: "掉下冰道(DNF)", isDNF: true}] },
+                { id: "1-2", min: 4.05, max: 4.35, errRate: 0.10, errs: [{name: "掉下冰道(DNF)", isDNF: true}] },
+                { id: "1-3", min: 5.00, max: 5.20, errRate: 0.38, errs: [{name: "掉下冰道(DNF)", isDNF: true}, {name: "撞墙失误", ranges:[[0.3, 0.6]]}, {name: "保守路线选择", ranges:[[0.6, 0.8]]}] },
+                { id: "1-4", min: 3.45, max: 3.65, errRate: 0.10, errs: [{name: "掉下冰道(DNF)", isDNF: true}, {name: "撞墙失误", ranges:[[0.3, 0.5]]}] },
+                { id: "1-5", min: 5.30, max: 5.50, errRate: 0.32, errs: [{name: "飞跃单格冰失误", ranges:[[0.7, 1]]}, {name: "保守路线选择", ranges:[[0.6, 0.8]]}] },
+                { id: "1-6", min: 5.60, max: 5.80, errRate: 0.24, errs: [{name: "撞墙失误", ranges:[[0.8, 1.2]]}] },
+                { id: "1-7", min: 4.80, max: 5.05, errRate: 0.22, errs: [{name: "未吃满蓝冰", ranges:[[0.3, 0.6]]}, {name: "上水失误", ranges:[[0.3, 0.5], [1, 2]]}] },
+                { id: "1-8", min: 4.50, max: 4.80, errRate: 0.18, errs: [{name: "掉下冰道(DNF)", isDNF: true}, {name: "保守路线选择", ranges:[[0.4, 0.8]]}, {name: "撞墙失误", ranges:[[0.4, 0.7]]}] },
+                { id: "1-9", min: 7.70, max: 8.00, errRate: 0.50, errs: [{name: "上水失误", ranges:[[5, 7], [10, 12]]}, {name: "保守路线选择", ranges:[[6, 8]]}] },
+                { id: "回到起点", min: 3.65, max: 3.75, errRate: 0.02, errs: [{name: "掉下冰道(DNF)", isDNF: true}] }
+            ]
+        },
+        "层级教学关卡": {
+            laps: 2,
+            segments: [
+                { id: "1-1", min: 5.35, max: 5.50, errRate: 0.06, errs: [{name: "撞墙失误", ranges:[[0.6, 1]]}, {name: "保守路线选择", ranges:[[0.5, 0.6]]}] },
+                { id: "1-2", min: 4.20, max: 4.45, errRate: 0.13, errs: [{name: "撞墙失误", ranges:[[0.6, 0.8]]}, {name: "保守技术选择", ranges:[[0.2, 0.4]]}] },
+                { id: "1-3", min: 3.65, max: 3.95, errRate: 0.13, errs: [{name: "撞墙失误", ranges:[[0.6, 0.8]]}, {name: "保守技术选择", ranges:[[0.2, 0.4]]}] },
+                { id: "1-4", min: 4.25, max: 4.50, errRate: 0.03, errs: [{name: "撞墙失误", ranges:[[0.4, 0.6]]}] },
+                { id: "1-5", min: 3.40, max: 3.55, errRate: 0.06, errs: [{name: "撞墙失误", ranges:[[0.4, 0.7]]}] },
+                { id: "1-6", min: 4.35, max: 4.55, errRate: 0.07, errs: [{name: "撞墙失误", ranges:[[0.5, 0.8], [1.5, 2]]}] },
+                { id: "1-7", min: 3.10, max: 3.25, errRate: 0.07, errs: [{name: "撞墙失误", ranges:[[0.6, 0.8]]}] },
+                { id: "1-8", min: 3.25, max: 3.50, errRate: 0.03, errs: [{name: "撞墙失误", ranges:[[0.4, 0.6]]}] },
+                { id: "1-9", min: 7.10, max: 7.30, errRate: 0.08, errs: [{name: "撞墙失误", ranges:[[0.4, 0.8]]}] },
+                { id: "回到起点", min: 6.90, max: 7.20, errRate: 0.28, errs: [{name: "撞墙失误", ranges:[[0.8, 1.5]]}, {name: "保守路线选择", ranges:[[0.7, 1]]}] }
+            ],
+            lap2_mods: { "起跑至2-1": { min: 4.35, max: 4.65, errRate: 0.28 } }
+        },
+        "宇宙城科技区": {
+            laps: 1,
+            segments: [
+                { id: "1-1", min: 4.00, max: 4.20, errRate: 0.08, errs: [{name: "撞墙失误", ranges:[[0.5, 0.7]]}] },
+                { id: "1-2", min: 5.80, max: 6.40, errRate: 0.09, errs: [{name: "撞墙失误", ranges:[[0.4, 0.6]]}, {name: "保守路线选择", ranges:[[0.3, 0.6]]}, {name: "上草失误", ranges:[[0.4, 0.6]]}] },
+                { id: "1-3", min: 3.90, max: 4.10, errRate: 0.19, errs: [{name: "撞墙失误", ranges:[[0.5, 0.7]]}, {name: "保守路线选择", ranges:[[0.3, 0.5]]}] },
+                { id: "1-4", min: 3.90, max: 4.05, errRate: 0.20, errs: [{name: "撞墙失误", ranges:[[0.5, 0.7]]}] },
+                { id: "1-5", min: 5.15, max: 5.50, errRate: 0.35, errs: [{name: "撞墙失误", ranges:[[0.8, 2]]}, {name: "保守技术选择", ranges:[[0.6, 1]]}] },
+                { id: "1-6", min: 3.60, max: 3.80, errRate: 0.13, errs: [{name: "撞墙失误", ranges:[[0.4, 0.6]]}, {name: "上草失误", ranges:[[0.5, 0.8]]}] },
+                { id: "1-7", min: 3.55, max: 3.80, errRate: 0.17, errs: [{name: "上水失误", ranges:[[3, 6]]}] },
+                { id: "1-8", min: 4.00, max: 4.40, errRate: 0.20, errs: [{name: "飞跃失误", ranges:[[1, 2]]}, {name: "保守路线选择", ranges:[[0.8, 1.5]]}] },
+                { id: "1-9", min: 5.65, max: 5.80, errRate: 0.12, errs: [{name: "飞跃失误", ranges:[[1, 2]]}, {name: "保守技术选择", ranges:[[0.8, 1.2]]}] },
+                { id: "1-10", min: 5.10, max: 5.40, errRate: 0.13, errs: [{name: "撞墙失误", ranges:[[0.6, 0.8]]}, {name: "保守路线选择", ranges:[[0.3, 0.5]]}] },
+                { id: "1-11", min: 4.35, max: 4.55, errRate: 0.20, errs: [{name: "撞墙失误", ranges:[[0.6, 0.8]]}] },
+                { id: "终点", min: 4.30, max: 4.45, errRate: 0.24, errs: [{name: "撞墙失误", ranges:[[0.6, 0.8]]}] }
+            ]
+        },
+        "极地破碎雪原": {
+            laps: 2,
+            segments: [
+                { id: "1-1", min: 4.60, max: 4.80, errRate: 0.02, errs: [{name: "上水失误", ranges:[[0.5, 0.7]]}] },
+                { id: "1-2", min: 4.85, max: 5.10, errRate: 0.02, errs: [{name: "上水失误", ranges:[[0.4, 0.6]]}] },
+                { id: "1-3", min: 5.20, max: 5.40, errRate: 0.14, errs: [{name: "撞墙失误", ranges:[[0.5, 0.8]]}, {name: "保守路线选择", ranges:[[0.4, 0.6]]}] },
+                { id: "1-4", min: 5.60, max: 5.75, errRate: 0.11, errs: [{name: "撞墙失误", ranges:[[0.5, 0.8]]}] },
+                { id: "1-5", min: 4.00, max: 4.10, errRate: 0.03, errs: [{name: "撞墙失误", ranges:[[0.5, 0.8]]}] },
+                { id: "1-6", min: 4.75, max: 5.00, errRate: 0.20, errs: [{name: "撞墙失误", ranges:[[0.6, 0.9]]}, {name: "卡墙急停", ranges:[[1, 1.5]]}, {name: "保守路线选择", ranges:[[0.4, 0.6]]}] },
+                { id: "1-7", min: 7.05, max: 7.30, errRate: 0.12, errs: [{name: "上水失误", ranges:[[0.5, 0.7]], isDNF: false, specialDNFProb: 0.1}, {name: "保守路线选择", ranges:[[0.3, 0.6]]}] },
+                { id: "1-8", min: 4.85, max: 5.10, errRate: 0.08, errs: [{name: "上水失误", ranges:[[2, 4]]}, {name: "保守路线选择", ranges:[[3, 5]]}] },
+                { id: "1-9", min: 4.40, max: 4.65, errRate: 0.15, errs: [{name: "撞墙失误", ranges:[[0.6, 0.8]]}, {name: "上水失误", ranges:[[1, 2]]}] },
+                { id: "1-10", min: 9.75, max: 10.00, errRate: 0.07, errs: [{name: "撞墙失误", ranges:[[0.3, 0.5]]}] },
+                { id: "回到起点", min: 2.55, max: 2.65, errRate: 0.40, errs: [{name: "飞跃失误", ranges:[[1, 2]], specialDNFProb: 0.05}] }
+            ],
+            lap2_mods: { "起跑至2-1": { min: 3.30, max: 3.50 } }
+        },
+        "宇宙城热电站": {
+            laps: 2,
+            segments: [
+                { id: "1-1", min: 6.80, max: 7.05, errRate: 0.04, errs: [{name: "撞墙失误", ranges:[[0.4, 0.6]]}] },
+                { id: "1-2", min: 7.80, max: 8.05, errRate: 0.08, errs: [{name: "撞墙失误", ranges:[[0.4, 0.6]]}, {name: "上草失误", ranges:[[0.3, 0.5]]}] },
+                { id: "1-3", min: 6.70, max: 7.05, errRate: 0.06, errs: [{name: "撞墙失误", ranges:[[0.5, 0.7]]}] },
+                { id: "1-4", min: 7.90, max: 8.15, errRate: 0.10, errs: [{name: "撞墙失误", ranges:[[0.4, 0.6]]}, {name: "飞跃失误", ranges:[[0.6, 0.8]], specialDNFProb: 0.02}, {name: "保守路线选择", ranges:[[0.3, 0.5]]}] },
+                { id: "1-5", min: 9.20, max: 9.45, errRate: 0.12, errs: [{name: "撞墙失误", ranges:[[0.5, 0.8]]}, {name: "上草失误", ranges:[[0.4, 0.6]]}] },
+                { id: "1-6", min: 4.95, max: 5.20, errRate: 0.38, errs: [{name: "飞跃失误", ranges:[[0.6, 1], [2, 3]]}] },
+                { id: "1-7", min: 8.00, max: 8.20, errRate: 0.14, errs: [{name: "撞墙失误", ranges:[[0.7, 1]]}, {name: "上草失误", ranges:[[0.3, 0.5]]}, {name: "飞跃失误", ranges:[[0.5, 0.7], [1.5, 2]]}] },
+                { id: "回到起点", min: 5.80, max: 6.00, errRate: 0.20, errs: [{name: "撞墙失误", ranges:[[2, 3]]}, {name: "上草失误", ranges:[[0.3, 0.5]]}, {name: "保守路线选择", ranges:[[0.4, 0.6], [2, 3]]}] }
+            ],
+            lap2_mods: { "起跑至2-1": { min: 6.00, max: 6.30, errRate: 0.08 }, "2-1至2-2": { min: 7.40, max: 7.70 } }
+        },
+        "恶地矿山采集场": {
+            laps: 1,
+            segments: [
+                { id: "1-1", min: 8.10, max: 8.40, errRate: 0.07, errs: [{name: "上草失误", ranges:[[0.80, 1.50]]}] },
+                { id: "1-2", min: 6.30, max: 6.55, errRate: 0.04, errs: [{name: "撞墙失误", ranges:[[0.40, 0.60]]}, {name: "上草失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-3", min: 5.30, max: 5.50, errRate: 0.09, errs: [{name: "撞墙失误", ranges:[[0.70, 1.20]]}] },
+                { id: "1-4", min: 5.45, max: 5.70, errRate: 0.10, errs: [{name: "撞墙失误", ranges:[[0.60, 1.00]]}] },
+                { id: "1-5", min: 6.95, max: 7.20, errRate: 0.11, errs: [{name: "撞墙失误", ranges:[[0.70, 1.20]]}] },
+                { id: "1-6", min: 6.50, max: 6.80, errRate: 0.15, errs: [{name: "上草失误", ranges:[[1.00, 12.00]]}] },
+                { id: "1-7", min: 6.85, max: 7.15, errRate: 0.09, errs: [{name: "上草失误", ranges:[[0.70, 1.00]]}, {name: "撞墙失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-8", min: 5.50, max: 5.75, errRate: 0.11, errs: [{name: "撞墙失误", ranges:[[0.70, 1.20]]}] },
+                { id: "1-9", min: 3.60, max: 3.80, errRate: 0.07, errs: [{name: "上草失误", ranges:[[0.70, 1.00]]}] },
+                { id: "1-10", min: 5.05, max: 5.20, errRate: 0.07, errs: [{name: "上草失误", ranges:[[0.50, 0.80]]}, {name: "保守技术选择", ranges:[[0.20, 0.40]]}] },
+                { id: "1-11", min: 5.75, max: 6.00, errRate: 0.08, errs: [{name: "上草失误", ranges:[[0.50, 0.80]]}] },
+                { id: "1-12", min: 6.30, max: 6.55, errRate: 0.08, errs: [{name: "上草失误", ranges:[[0.40, 0.80]]}] },
+                { id: "1-13", min: 7.45, max: 7.60, errRate: 0.07, errs: [{name: "上草失误", ranges:[[0.40, 0.80]]}] },
+                { id: "1-14", min: 5.10, max: 5.25, errRate: 0.18, errs: [{name: "撞墙失误", ranges:[[0.70, 1.20]]}] },
+                { id: "1-15", min: 8.55, max: 8.85, errRate: 0.13, errs: [{name: "上草失误", ranges:[[0.30, 0.60]]}, {name: "撞墙失误", ranges:[[0.70, 1.20]]}] },
+                { id: "1-16", min: 5.55, max: 5.75, errRate: 0.08, errs: [{name: "上草失误", ranges:[[0.50, 0.80]]}, {name: "撞墙失误", ranges:[[0.70, 1.00]]}] },
+                { id: "1-17", min: 7.40, max: 7.60, errRate: 0.25, errs: [{name: "保守技术选择", ranges:[[0.30, 0.50]]}, {name: "撞墙失误", ranges:[[0.70, 1.20]]}, {name: "上草失误", ranges:[[0.40, 0.80]]}] },
+                { id: "终点", min: 6.05, max: 6.25, errRate: 0.08, errs: [{name: "飞跃失误", ranges:[[0.30, 0.80]]}, {name: "撞墙失误", ranges:[[0.50, 1.00]]}] }
+            ]
+        },
+        "鹦特拉格斯": {
+            laps: 1,
+            segments: [
+                { id: "1-1", min: 6.90, max: 7.10, errRate: 0.01, errs: [{name: "撞墙失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-2", min: 5.45, max: 5.70, errRate: 0.28, errs: [{name: "上水失误", ranges:[[4.00, 6.00]]}, {name: "撞墙失误", ranges:[[4.00, 6.00]]}, {name: "保守路线选择", ranges:[[2.00, 3.00]]}] },
+                { id: "1-3", min: 4.90, max: 5.10, errRate: 0.35, errs: [{name: "保守路线选择", ranges:[[2.00, 4.00]]}, {name: "上水失误", ranges:[[1.00, 2.00]]}, {name: "撞墙失误", ranges:[[3.00, 5.00]]}] },
+                { id: "1-4", min: 4.70, max: 4.80, errRate: 0.10, errs: [{name: "上水失误", ranges:[[1.00, 2.00]]}, {name: "撞墙失误", ranges:[[1.00, 2.00]]}] },
+                { id: "1-5", min: 5.30, max: 5.55, errRate: 0.08, errs: [{name: "撞墙失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-6", min: 4.80, max: 5.05, errRate: 0.20, errs: [{name: "撞墙失误", ranges:[[2.00, 3.00]]}, {name: "保守路线选择", ranges:[[1.00, 2.00]]}] },
+                { id: "1-7", min: 5.55, max: 5.75, errRate: 0.08, errs: [{name: "上草失误", ranges:[[0.80, 2.00]]}] },
+                { id: "1-8", min: 5.70, max: 5.85, errRate: 0.15, errs: [{name: "掉落单冰桥(DNF)", isDNF: true}, {name: "保守技术选择", ranges:[[0.30, 0.50]]}, {name: "撞墙失误", ranges:[[1.00, 1.50]]}] },
+                { id: "1-9", min: 6.80, max: 7.00, errRate: 0.05, errs: [{name: "上草失误", ranges:[[0.60, 1.50]]}, {name: "撞墙失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-10", min: 6.45, max: 6.60, errRate: 0.25, errs: [{name: "掉落桥下(DNF)", isDNF: true}, {name: "撞墙失误", ranges:[[0.80, 2.00]]}, {name: "上草失误", ranges:[[0.60, 1.00]]}] },
+                { id: "1-11", min: 5.35, max: 5.45, errRate: 0.12, errs: [{name: "掉落桥下(DNF)", isDNF: true}, {name: "保守技术选择", ranges:[[0.30, 0.50]]}] },
+                { id: "1-12", min: 7.95, max: 8.15, errRate: 0.07, errs: [{name: "撞墙失误", ranges:[[1.00, 3.00]]}] },
+                { id: "1-13", min: 7.50, max: 7.80, errRate: 0.40, errs: [{name: "保守路线选择", ranges:[[2.50, 3.00]]}, {name: "掉落桥下(DNF)", isDNF: true}] },
+                { id: "终点", min: 4.40, max: 4.50, errRate: 0.0, errs: [] }
+            ]
+        },
+        "炼狱祭坛": {
+            laps: 1,
+            segments: [
+                { id: "1-1", min: 6.80, max: 7.00, errRate: 0.06, errs: [{name: "撞墙失误", ranges:[[0.80, 1.00]]}, {name: "上草失误", ranges:[[0.60, 1.20]]}, {name: "保守路线选择", ranges:[[0.20, 0.50]]}] },
+                { id: "1-2", min: 6.15, max: 6.35, errRate: 0.07, errs: [{name: "撞墙失误", ranges:[[0.40, 0.60]]}] },
+                { id: "1-3", min: 9.35, max: 9.60, errRate: 0.09, errs: [{name: "上草失误", ranges:[[0.50, 0.80]]}] },
+                { id: "1-4", min: 2.90, max: 3.05, errRate: 0.10, errs: [{name: "撞墙失误", ranges:[[0.60, 1.00]]}] },
+                { id: "1-5", min: 5.85, max: 6.05, errRate: 0.10, errs: [{name: "上草失误", ranges:[[0.60, 1.00]]}] },
+                { id: "1-6", min: 5.45, max: 5.60, errRate: 0.12, errs: [{name: "飞跃失误", ranges:[[1.00, 2.00]]}, {name: "掉入DNF坑位(DNF)", isDNF: true}] },
+                { id: "1-7", min: 6.40, max: 6.60, errRate: 0.07, errs: [{name: "撞墙失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-8", min: 8.15, max: 8.40, errRate: 0.10, errs: [{name: "飞跃失误", ranges:[[1.00, 2.00]]}, {name: "上草失误", ranges:[[0.50, 0.80]]}, {name: "掉入DNF坑位(DNF)", isDNF: true}] },
+                { id: "1-9", min: 6.45, max: 6.60, errRate: 0.08, errs: [{name: "保守技术选择", ranges:[[0.30, 0.50]]}, {name: "上草失误", ranges:[[0.50, 0.80]]}] },
+                { id: "1-10", min: 4.90, max: 5.05, errRate: 0.25, errs: [{name: "上草失误", ranges:[[1.00, 2.00]]}, {name: "保守技术选择", ranges:[[0.40, 0.70]]}, {name: "撞墙失误", ranges:[[0.80, 1.50]]}] },
+                { id: "1-11", min: 5.05, max: 5.25, errRate: 0.08, errs: [{name: "掉下岩浆(DNF)", isDNF: true}, {name: "上草失误", ranges:[[0.60, 1.00]]}] },
+                { id: "1-12", min: 5.60, max: 5.80, errRate: 0.07, errs: [{name: "掉下岩浆(DNF)", isDNF: true}, {name: "上草失误", ranges:[[0.50, 0.80]]}] },
+                { id: "1-13", min: 8.55, max: 8.75, errRate: 0.10, errs: [{name: "上草失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-14", min: 7.40, max: 7.60, errRate: 0.05, errs: [{name: "飞跃失误", ranges:[[1.00, 2.00]]}, {name: "上草失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-15", min: 6.15, max: 6.30, errRate: 0.09, errs: [{name: "上草失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-16", min: 5.45, max: 5.65, errRate: 0.09, errs: [{name: "掉下岩浆(DNF)", isDNF: true}] },
+                { id: "1-17", min: 2.85, max: 4.85, errRate: 0.10, errs: [{name: "撞墙失误", ranges:[[0.50, 1.50]]}] },
+                { id: "1-18", min: 6.85, max: 7.05, errRate: 0.10, errs: [{name: "保守技术选择", ranges:[[0.20, 0.40]]}, {name: "掉入DNF坑位(DNF)", isDNF: true}, {name: "保守路线选择", ranges:[[1.50, 2.00]]}] },
+                { id: "1-19", min: 6.25, max: 6.45, errRate: 0.09, errs: [{name: "撞墙失误", ranges:[[0.30, 1.00]]}] },
+                { id: "终点", min: 8.55, max: 8.70, errRate: 0.10, errs: [{name: "保守路线选择", ranges:[[0.40, 0.60]]}, {name: "撞墙失误", ranges:[[0.80, 1.50]]}] }
+            ]
+        },
+        "极地冰封王座": {
+            laps: 1,
+            segments: [
+                { id: "1-1", min: 7.00, max: 7.20, errRate: 0.03, errs: [{name: "撞墙失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-2", min: 4.85, max: 5.00, errRate: 0.06, errs: [{name: "撞墙失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-3", min: 3.05, max: 3.15, errRate: 0.13, errs: [{name: "保守技术选择", ranges:[[0.30, 0.80]]}, {name: "撞墙失误", ranges:[[0.60, 1.00]]}] },
+                { id: "1-4", min: 5.65, max: 5.85, errRate: 0.13, errs: [{name: "撞墙失误", ranges:[[0.80, 1.20]]}] },
+                { id: "1-5", min: 9.15, max: 9.35, errRate: 0.13, errs: [{name: "撞墙失误", ranges:[[0.80, 1.20]]}] },
+                { id: "1-6", min: 6.35, max: 6.60, errRate: 0.20, errs: [{name: "撞墙失误", ranges:[[0.80, 1.50]]}, {name: "保守技术选择", ranges:[[0.45, 0.80]]}] },
+                { id: "1-7", min: 6.65, max: 6.85, errRate: 0.08, errs: [{name: "保守技术选择", ranges:[[0.40, 0.80]]}, {name: "撞墙失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-8", min: 7.30, max: 7.50, errRate: 0.08, errs: [{name: "撞墙失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-9", min: 5.10, max: 5.25, errRate: 0.10, errs: [{name: "保守技术选择", ranges:[[0.30, 0.50]]}, {name: "撞墙失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-10", min: 9.10, max: 9.25, errRate: 0.08, errs: [{name: "保守技术选择", ranges:[[0.30, 0.50]]}, {name: "撞墙失误", ranges:[[0.80, 1.20]]}] },
+                { id: "1-11", min: 5.45, max: 5.60, errRate: 0.08, errs: [{name: "保守技术选择", ranges:[[0.30, 0.50]]}, {name: "撞墙失误", ranges:[[0.80, 1.20]]}] },
+                { id: "1-12", min: 4.95, max: 5.15, errRate: 0.09, errs: [{name: "保守技术选择", ranges:[[0.40, 0.60]]}, {name: "掉水失误", ranges:[[1.50, 3.00]]}] },
+                { id: "1-13", min: 8.00, max: 8.20, errRate: 0.11, errs: [{name: "撞墙失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-14", min: 7.20, max: 7.40, errRate: 0.18, errs: [{name: "掉水失误", ranges:[[2.00, 3.00]]}, {name: "保守路线选择", ranges:[[0.40, 0.80]]}, {name: "保守技术选择", ranges:[[0.30, 0.60]]}, {name: "撞墙失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-15", min: 6.50, max: 6.75, errRate: 0.12, errs: [{name: "撞墙失误", ranges:[[0.80, 1.20]]}] },
+                { id: "1-16", min: 6.50, max: 6.70, errRate: 0.09, errs: [{name: "撞墙失误", ranges:[[0.60, 1.20]]}] },
+                { id: "1-17", min: 4.25, max: 4.45, errRate: 0.09, errs: [{name: "撞墙失误", ranges:[[0.60, 1.20]]}, {name: "保守技术选择", ranges:[[0.30, 0.50]]}] },
+                { id: "1-18", min: 4.65, max: 4.80, errRate: 0.15, errs: [{name: "撞墙失误", ranges:[[0.60, 1.20]]}, {name: "保守技术选择", ranges:[[0.50, 0.80]]}, {name: "掉水失误", ranges:[[0.80, 2.00]]}] },
+                { id: "1-19", min: 4.00, max: 4.15, errRate: 0.09, errs: [{name: "撞墙失误", ranges:[[0.80, 1.50]]}] },
+                { id: "终点", min: 3.10, max: 3.20, errRate: 0.0, errs: [] }
+            ]
+        },
+        "和风山岫": {
+            laps: 2,
+            segments: [
+                { id: "1-1", min: 6.70, max: 6.85, errRate: 0.05, errs: [{name: "撞墙失误", ranges:[[0.50, 1.00]]}, {name: "保守路线选择", ranges:[[0.30, 0.50]]}] },
+                { id: "1-2", min: 3.25, max: 3.45, errRate: 0.06, errs: [{name: "掉水失误(DNF)", isDNF: true}, {name: "上草失误", ranges:[[1.00, 1.50]]}, {name: "走线失误", ranges:[[0.30, 0.80]]}] },
+                { id: "1-3", min: 5.90, max: 6.05, errRate: 0.15, errs: [{name: "保守路线选择", ranges:[[0.50, 0.80]]}, {name: "保守技术选择", ranges:[[1.00, 1.50]]}, {name: "掉桥失误", ranges:[[3.50, 5.00]]}] },
+                { id: "1-4", min: 4.00, max: 4.15, errRate: 0.15, errs: [{name: "保守路线选择", ranges:[[0.40, 0.80]]}, {name: "保守技术选择", ranges:[[0.50, 1.00]]}] },
+                { id: "1-5", min: 4.55, max: 4.75, errRate: 0.12, errs: [{name: "撞墙失误", ranges:[[1.00, 1.50]]}, {name: "保守技术选择", ranges:[[0.50, 1.00]]}] },
+                { id: "1-6", min: 6.15, max: 6.30, errRate: 0.19, errs: [{name: "撞墙失误", ranges:[[0.80, 1.50]]}, {name: "保守技术选择", ranges:[[0.45, 0.80]]}, {name: "撞墙失误", ranges:[[1.00, 2.00]]}] },
+                { id: "1-7", min: 5.20, max: 5.35, errRate: 0.10, errs: [{name: "保守技术选择", ranges:[[0.40, 0.80]]}, {name: "撞墙失误", ranges:[[0.60, 1.20]]}, {name: "掉桥失误", ranges:[[2.00, 3.00]]}, {name: "保守路线选择", ranges:[[1.50, 2.50]]}, {name: "上水失误", ranges:[[0.50, 1.00]]}] },
+                { id: "1-8", min: 1.35, max: 1.45, errRate: 0.0, errs: [] },
+                { id: "第二圈起始点", min: 8.90, max: 9.05, errRate: 0.04, errs: [{name: "保守技术选择", ranges:[[0.30, 0.50]]}, {name: "上水失误", ranges:[[0.40, 0.70]]}] }
+            ]
+        }
+    };
+
+    // ═══════════════════════════════════════════════
+    // 模拟器核心逻辑 (与原有相同，增加云端上传)
+    // ═══════════════════════════════════════════════
+    let currentTrackName = "";
+    let trackSegments = [];
+    let currentSegment = 0;
+    let accumulatedTime = 0;
+    let isPaused = false;
+    let simTimeout = null;
+    let currentRunPB = [];
+    let pbRun = null;
+    let isDNF = false;
+
+    function buildTrackSegments(trackName) {
+        const track = RAW_TRACKS[trackName];
+        let builtSegments = [];
+
+        if (trackName === "和风山岫") {
+            track.segments.forEach(baseSeg => {
+                builtSegments.push(JSON.parse(JSON.stringify(baseSeg)));
+            });
+            builtSegments.push({
+                id: "2-1", min: 26.50, max: 26.85, errRate: 0.12,
+                errs: [
+                    {name: "撞墙失误", ranges:[[1.00, 2.00]]},
+                    {name: "保守路线选择", ranges:[[0.50, 0.80]]},
+                    {name: "掉桥失误", ranges:[[0.60, 1.00]]},
+                    {name: "上水失误", ranges:[[0.50, 1.00]]}
+                ]
+            });
+            builtSegments.push({
+                id: "2-2", min: 4.10, max: 4.25, errRate: 0.08,
+                errs: [
+                    {name: "掉水失误(DNF)", isDNF: true},
+                    {name: "上草失误", ranges:[[1.00, 1.50]]},
+                    {name: "走线失误", ranges:[[0.30, 0.80]]},
+                    {name: "保守路线选择", ranges:[[0.40, 0.70]]}
+                ]
+            });
+            for (let i = 2; i < track.segments.length; i++) {
+                let seg = JSON.parse(JSON.stringify(track.segments[i]));
+                if (seg.id.includes("1-")) {
+                    let num = parseInt(seg.id.split("-")[1]);
+                    seg.id = "2-" + num;
+                } else if (seg.id === "第二圈起始点") {
+                    seg.id = "终点";
+                }
+                builtSegments.push(seg);
+            }
+            return builtSegments;
+        }
+
+        for (let lap = 1; lap <= track.laps; lap++) {
+            track.segments.forEach(baseSeg => {
+                let seg = JSON.parse(JSON.stringify(baseSeg));
+                if (lap > 1) {
+                    seg.id = seg.id.replace(/1-/g, lap + "-");
+                    if (seg.id.includes("回到起点") || seg.id.includes("至终点")) {
+                        seg.id = seg.id.replace("回到起点", lap === track.laps ? "终点" : "回到起点");
+                    } else if (seg.id.startsWith("起跑至1-1")) {
+                        seg.id = "起跑至" + lap + "-1";
+                    } else if (seg.id.startsWith("起跑至")) {
+                        seg.id = seg.id.replace("起跑至", "起跑至" + lap + "-");
+                        seg.id = seg.id.replace(lap + "-1-1", lap + "-1");
+                    }
+                    if (track.lap2_mods && track.lap2_mods[seg.id]) {
+                        let mod = track.lap2_mods[seg.id];
+                        if (mod.min !== undefined) seg.min = mod.min;
+                        if (mod.max !== undefined) seg.max = mod.max;
+                        if (mod.errRate !== undefined) seg.errRate = mod.errRate;
+                    }
+                }
+                builtSegments.push(seg);
+            });
+        }
+        return builtSegments;
+    }
+
+    function updatePBDisplay() {
+        currentTrackName = document.getElementById('track-select').value;
+        let pbs = JSON.parse(localStorage.getItem('dcipl_s8_pbs_v2')) || {};
+        pbRun = pbs[currentTrackName] || null;
+        const pbDisplay = document.getElementById('pb-display');
+        if (pbRun && pbRun.length > 0) {
+            pbDisplay.innerText = pbRun[pbRun.length - 1].toFixed(2) + " S";
+        } else {
+            pbDisplay.innerText = "NO RECORD";
+        }
+    }
+
+    function getRandomTime(min, max) {
+        let steps = Math.round((max - min) / 0.05);
+        let randomStep = Math.floor(Math.random() * (steps + 1));
+        return min + randomStep * 0.05;
+    }
+
+    function startSim() {
+        currentTrackName = document.getElementById('track-select').value;
+        trackSegments = buildTrackSegments(currentTrackName);
+        document.getElementById('title-screen').style.display = 'none';
+        document.getElementById('sim-screen').style.display = 'block';
+        document.getElementById('header-track-name').innerText = currentTrackName;
+        document.getElementById('cloud-status').textContent = '';
+        document.getElementById('cloud-status').className = 'cloud-status';
+        resetSimVars();
+        document.getElementById('sim-status').innerText = ">>> SIMULATION RUNNING <<<";
+        document.getElementById('sim-status').style.color = "var(--success)";
+        scheduleNextSegment();
+    }
+
+    function resetSimVars() {
+        clearTimeout(simTimeout);
+        currentSegment = 0;
+        accumulatedTime = 0;
+        isPaused = false;
+        isDNF = false;
+        currentRunPB = [];
+        let pbs = JSON.parse(localStorage.getItem('dcipl_s8_pbs_v2')) || {};
+        pbRun = pbs[currentTrackName] || null;
+        let totalTimeEl = document.getElementById('total-time');
+        totalTimeEl.innerText = "0.00";
+        totalTimeEl.classList.remove('dnf-mode');
+        document.getElementById('diff-panel').style.opacity = "0";
+        document.getElementById('diff-time').innerHTML = "--";
+        document.getElementById('history-list').innerHTML = "";
+        let btnPause = document.getElementById('btn-pause');
+        btnPause.innerText = "暂停";
+        btnPause.disabled = false;
+    }
+
+    function scheduleNextSegment() {
+        simTimeout = setTimeout(processSegment, 1200);
+    }
+
+    function getMCNowTime() {
+        let now = new Date();
+        return "[" + String(now.getHours()).padStart(2, '0') + ":" +
+               String(now.getMinutes()).padStart(2, '0') + ":" +
+               String(now.getSeconds()).padStart(2, '0') + "]";
+    }
+
+    function processSegment() {
+        if (isPaused || isDNF) return;
+        let seg = trackSegments[currentSegment];
+        let normalTime = getRandomTime(seg.min, seg.max);
+        let hasError = Math.random() < seg.errRate;
+        let errorTime = 0;
+        let errorDetailsHtml = "";
+        let isClean = true;
+        let chosenErrName = "";
+
+        if (hasError && seg.errs && seg.errs.length > 0) {
+            let errType = seg.errs[Math.floor(Math.random() * seg.errs.length)];
+            chosenErrName = errType.name;
+            if (errType.isDNF || (errType.specialDNFProb && Math.random() < errType.specialDNFProb)) {
+                isDNF = true;
+                isClean = false;
+                errorDetailsHtml = '<div class="dnf-detail">> 严重故障: ' + errType.name + ' (坠机DNF)</div>';
+            } else {
+                isClean = false;
+                let chosenRange = errType.ranges[Math.floor(Math.random() * errType.ranges.length)];
+                errorTime = getRandomTime(chosenRange[0], chosenRange[1]);
+                errorDetailsHtml = '<div class="error-detail">> 警告: ' + errType.name + ' (+' + errorTime.toFixed(2) + 's)</div>';
+            }
+        }
+
+        let segmentTotalTime = normalTime + errorTime;
+        accumulatedTime += segmentTotalTime;
+        currentRunPB.push(accumulatedTime);
+
+        let totalTimeEl = document.getElementById('total-time');
+        let diffPanel = document.getElementById('diff-panel');
+        let diffStr = "";
+        let diffClass = "";
+
+        if (isDNF) {
+            totalTimeEl.innerText = "DNF";
+            totalTimeEl.classList.add('dnf-mode');
+            diffPanel.style.opacity = "0";
+        } else {
+            totalTimeEl.innerText = accumulatedTime.toFixed(2);
+            if (pbRun && pbRun[currentSegment]) {
+                diffPanel.style.opacity = "1";
+                let diff = accumulatedTime - pbRun[currentSegment];
+                let diffHtml = "";
+                if (Math.abs(diff) < 0.01) {
+                    diffStr = "[-0.00秒]";
+                    diffClass = "mc-diff-green";
+                    diffHtml = '<span class="diff-green">-0.00</span>';
+                } else if (diff > 0) {
+                    diffStr = "[+" + diff.toFixed(2) + "秒]";
+                    diffClass = "mc-diff-red";
+                    diffHtml = '<span class="diff-red">+' + diff.toFixed(2) + '</span>';
+                } else {
+                    diffStr = "[" + diff.toFixed(2) + "秒]";
+                    diffClass = "mc-diff-green";
+                    diffHtml = '<span class="diff-green">' + diff.toFixed(2) + '</span>';
+                }
+                document.getElementById('diff-time').innerHTML = diffHtml;
+            }
+        }
+
+        let historyList = document.getElementById('history-list');
+        let item = document.createElement('div');
+        item.className = 'history-item';
+        let pointName = seg.id;
+        let displayTime = isDNF ? "DNF" : segmentTotalTime.toFixed(2);
+        let diffRender = (diffStr && !isDNF) ? '<span class="' + diffClass + '">' + diffStr + '</span>' : "";
+
+        item.innerHTML = '<div><span class="mc-time-bracket">' + getMCNowTime() + '</span> <span class="mc-name-bracket">[' + currentTrackName + ']</span> <span class="mc-point">Point ' + pointName + ' 用时</span> <span class="mc-time-val">' + displayTime + '</span> <span class="mc-point">秒</span> ' + diffRender + '</div>' + errorDetailsHtml;
+        historyList.appendChild(item);
+        historyList.scrollTop = historyList.scrollHeight;
+
+        currentSegment++;
+
+        if (isDNF) {
+            document.getElementById('sim-status').innerText = ">>> MISSION FAILED (坠机) <<<";
+            document.getElementById('sim-status').style.color = "var(--danger)";
+            document.getElementById('btn-pause').disabled = true;
+            document.getElementById('cloud-status').textContent = '';
+            document.getElementById('cloud-status').className = 'cloud-status';
+        } else if (currentSegment >= trackSegments.length) {
+            finishRun();
+        } else {
+            scheduleNextSegment();
+        }
+    }
+
+    function finishRun() {
+        document.getElementById('sim-status').innerText = ">>> RUN COMPLETED <<<";
+        document.getElementById('sim-status').style.color = "#aaa";
+        document.getElementById('btn-pause').disabled = true;
+
+        let isNewPB = false;
+        if (!pbRun || accumulatedTime < pbRun[pbRun.length - 1]) {
+            isNewPB = true;
+            let pbs = JSON.parse(localStorage.getItem('dcipl_s8_pbs_v2')) || {};
+            pbs[currentTrackName] = currentRunPB;
+            localStorage.setItem('dcipl_s8_pbs_v2', JSON.stringify(pbs));
+            pbRun = currentRunPB;
+        }
+
+        if (isNewPB) {
+            document.getElementById('sim-status').innerHTML = ">>> NEW RECORD ESTABLISHED <<<";
+            document.getElementById('sim-status').style.color = "var(--primary)";
+
+            // 上传到云端
+            if (playerState.isLoggedIn) {
+                const statusEl = document.getElementById('cloud-status');
+                statusEl.textContent = '☁️ 正在同步到云端...';
+                statusEl.className = 'cloud-status syncing';
+                uploadPBToCloud(currentTrackName, accumulatedTime, currentRunPB).then(result => {
+                    if (result && result.updated) {
+                        statusEl.textContent = '☁️ 已同步至云端！赛道排名: #' + (result.rank || '?') + ' / ' + (result.total_players || '?') + ' 人';
+                        statusEl.className = 'cloud-status synced';
+                        showToast('🏆 新PB已上传云端！赛道排名第 ' + (result.rank || '?') + ' 名', 'success');
+                    } else if (result && !result.updated) {
+                        statusEl.textContent = '☁️ 云端已有更好成绩';
+                        statusEl.className = 'cloud-status synced';
+                    } else {
+                        statusEl.textContent = '⚠️ 云端同步失败，成绩已保存到本地';
+                        statusEl.className = 'cloud-status error';
+                    }
+                });
+            } else {
+                document.getElementById('cloud-status').textContent = '💡 登入账号后可上传成绩至云端排行榜';
+                document.getElementById('cloud-status').className = 'cloud-status';
+            }
+        }
+    }
+
+    function togglePause() {
+        if (currentSegment >= trackSegments.length || isDNF) return;
+        let btn = document.getElementById('btn-pause');
+        isPaused = !isPaused;
+        if (isPaused) {
+            btn.innerText = "恢复运行";
+            clearTimeout(simTimeout);
+            document.getElementById('sim-status').innerText = ">>> SYSTEM PAUSED <<<";
+            document.getElementById('sim-status').style.color = "var(--warning)";
+        } else {
+            btn.innerText = "暂停";
+            document.getElementById('sim-status').innerText = ">>> SIMULATION RUNNING <<<";
+            document.getElementById('sim-status').style.color = "var(--success)";
+            scheduleNextSegment();
+        }
+    }
+
+    function restartSim() {
+        resetSimVars();
+        document.getElementById('cloud-status').textContent = '';
+        document.getElementById('cloud-status').className = 'cloud-status';
+        document.getElementById('sim-status').innerText = ">>> SIMULATION RUNNING <<<";
+        document.getElementById('sim-status').style.color = "var(--success)";
+        scheduleNextSegment();
+    }
+
+    function exitSim() {
+        clearTimeout(simTimeout);
+        document.getElementById('sim-screen').style.display = 'none';
+        document.getElementById('title-screen').style.display = 'flex';
+        updatePBDisplay();
+    }
+
+    // ═══════════════════════════════════════════════
+    // 赛季模式 (增加云端上传)
+    // ═══════════════════════════════════════════════
+    const SEASON_TRACKS = [
+        "恶地矿山采集场", "极地冰封王座", "炼狱祭坛", "层级教学关卡",
+        "宇宙城科技区", "海岸冰场", "世纪天城", "和风山岫",
+        "鹦特拉格斯", "宇宙城热电站", "极地破碎雪原"
+    ];
+
+    const SEASON_STANDARDS = {
+        "恶地矿山采集场": 114, "极地冰封王座": 122, "炼狱祭坛": 126,
+        "层级教学关卡": 95, "宇宙城科技区": 55, "海岸冰场": 90,
+        "世纪天城": 98, "和风山岫": 117, "鹦特拉格斯": 83,
+        "宇宙城热电站": 118, "极地破碎雪原": 118
+    };
+
+    let seasonState = { day: 1, totalDays: 8, remLaps: 100, bestTimes: {}, dayResults: {}, savedAllocation: {} };
+
+    function generateDefaultAllocation() {
+        const alloc = {};
+        const total = 100;
+        const trackCount = SEASON_TRACKS.length;
+        const base = Math.floor(total / trackCount);
+        let remainder = total - base * trackCount;
+        SEASON_TRACKS.forEach(track => {
+            alloc[track] = base + (remainder > 0 ? 1 : 0);
+            if (remainder > 0) remainder--;
+        });
+        seasonState.savedAllocation = JSON.parse(JSON.stringify(alloc));
+    }
+
+    function initializeSeason() {
+        SEASON_TRACKS.forEach(track => { seasonState.bestTimes[track] = null; });
+        if (Object.keys(seasonState.savedAllocation).length === 0) { generateDefaultAllocation(); }
+    }
+
+    function openSeasonMode() {
+        initializeSeason();
+        document.getElementById('title-screen').style.display = 'none';
+        document.getElementById('season-screen').style.display = 'block';
+        document.getElementById('season-summary-area').style.display = 'none';
+        document.getElementById('season-setup-area').style.display = 'block';
+        document.getElementById('season-upload-status').innerHTML = '';
+        renderSeasonTrackGrid();
+        updateSeasonHeader();
+    }
+
+    function exitSeason() {
+        document.getElementById('season-screen').style.display = 'none';
+        document.getElementById('title-screen').style.display = 'flex';
+        updatePBDisplay();
+    }
+
+    function renderSeasonTrackGrid() {
+        const grid = document.getElementById('season-track-grid');
+        grid.innerHTML = '';
+        SEASON_TRACKS.forEach(track => {
+            const card = document.createElement('div');
+            card.className = 'season-track-card';
+            const bestTime = seasonState.bestTimes[track];
+            const bestStr = bestTime ? bestTime.toFixed(2) + 's' : '暂无记录';
+            const defaultVal = seasonState.savedAllocation[track] || 0;
+            card.innerHTML = '<h3>' + track + '</h3><div style="color:#888; font-size:0.85rem; margin-bottom:8px;">赛季最佳: <span style="color:var(--success);">' + bestStr + '</span></div><label style="color:#aaa; font-size:0.85rem;">今日分配次数:</label><input type="number" id="season-lap-' + track + '" min="0" max="100" value="' + defaultVal + '" onchange="updateSeasonLapCount()">';
+            grid.appendChild(card);
+        });
+        updateSeasonLapCount();
+    }
+
+    function saveCurrentAllocation() {
+        SEASON_TRACKS.forEach(track => {
+            const input = document.getElementById('season-lap-' + track);
+            if (input) { seasonState.savedAllocation[track] = parseInt(input.value) || 0; }
+        });
+        localStorage.setItem('dcipl_s8_season_alloc', JSON.stringify(seasonState.savedAllocation));
+        alert('当前分配方案已保存为默认方案！');
+    }
+
+    function loadSavedAllocation() {
+        const saved = localStorage.getItem('dcipl_s8_season_alloc');
+        if (saved) { seasonState.savedAllocation = JSON.parse(saved); }
+        SEASON_TRACKS.forEach(track => {
+            const input = document.getElementById('season-lap-' + track);
+            if (input) { input.value = seasonState.savedAllocation[track] || 0; }
+        });
+        updateSeasonLapCount();
+    }
+
+    function updateSeasonHeader() {
+        document.getElementById('season-day-display').innerHTML = 'DAY <span>' + seasonState.day + '</span> / ' + seasonState.totalDays;
+        document.getElementById('rem-laps-count').innerText = seasonState.remLaps;
+    }
+
+    function simulateSingleRun(trackName) {
+        const segs = buildTrackSegments(trackName);
+        let acc = 0;
+        let isDNF = false;
+        for (let i = 0; i < segs.length; i++) {
+            const seg = segs[i];
+            const normalTime = getRandomTime(seg.min, seg.max);
+            let errorTime = 0;
+            const hasError = Math.random() < seg.errRate;
+            if (hasError && seg.errs && seg.errs.length > 0) {
+                const errType = seg.errs[Math.floor(Math.random() * seg.errs.length)];
+                if (errType.isDNF || (errType.specialDNFProb && Math.random() < errType.specialDNFProb)) {
+                    isDNF = true;
+                    break;
+                } else {
+                    const chosenRange = errType.ranges[Math.floor(Math.random() * errType.ranges.length)];
+                    errorTime = getRandomTime(chosenRange[0], chosenRange[1]);
+                }
+            }
+            acc += normalTime + errorTime;
+        }
+        return { time: acc, isDNF };
+    }
+
+    function updateSeasonLapCount() {
+        let total = 0;
+        SEASON_TRACKS.forEach(track => {
+            const input = document.getElementById('season-lap-' + track);
+            if (input) total += parseInt(input.value) || 0;
+        });
+        seasonState.remLaps = Math.max(0, 100 - total);
+        document.getElementById('rem-laps-count').innerText = seasonState.remLaps;
+    }
+
+    function executeSeasonDay() {
+        let total = 0;
+        const allocations = {};
+        SEASON_TRACKS.forEach(track => {
+            const input = document.getElementById('season-lap-' + track);
+            const val = parseInt(input.value) || 0;
+            allocations[track] = val;
+            total += val;
+        });
+        if (total > 100) { alert('今日分配次数超过100次！请调整。'); return; }
+        if (total === 0) { alert('请至少分配一次刷圈。'); return; }
+
+        const dayKey = 'day' + seasonState.day;
+        if (!seasonState.dayResults[dayKey]) seasonState.dayResults[dayKey] = {};
+
+        SEASON_TRACKS.forEach(track => {
+            const count = allocations[track];
+            if (count === 0) return;
+            let bestTime = Infinity;
+            for (let i = 0; i < count; i++) {
+                const result = simulateSingleRun(track);
+                if (!result.isDNF && result.time < bestTime) bestTime = result.time;
+            }
+            if (bestTime < Infinity) {
+                seasonState.dayResults[dayKey][track] = bestTime;
+                if (seasonState.bestTimes[track] === null || seasonState.bestTimes[track] === undefined || bestTime < seasonState.bestTimes[track]) {
+                    seasonState.bestTimes[track] = bestTime;
+                }
+            } else {
+                seasonState.dayResults[dayKey][track] = null;
+            }
+        });
+
+        seasonState.day++;
+        seasonState.remLaps = 100;
+
+        if (seasonState.day > seasonState.totalDays) {
+            showSeasonSummary();
+        } else {
+            updateSeasonHeader();
+            renderSeasonTrackGrid();
+            alert('第 ' + (seasonState.day - 1) + ' 天模拟完成！已进入第 ' + seasonState.day + ' 天（保留前一天分配方案）。');
+        }
+    }
+
+    function showSeasonSummary() {
+        document.getElementById('season-setup-area').style.display = 'none';
+        document.getElementById('season-summary-area').style.display = 'block';
+        const list = document.getElementById('season-scores-list');
+        list.innerHTML = '';
+        let totalScore = 0;
+        const trackScoresForUpload = {};
+
+        SEASON_TRACKS.forEach(track => {
+            const pb = seasonState.bestTimes[track];
+            const standard = SEASON_STANDARDS[track];
+            let score = 0;
+            let scoreStr = '未完成';
+            if (pb !== null && pb !== undefined) {
+                score = 100 - (pb - standard);
+                score = Math.round(score * 100) / 100;
+                totalScore += score;
+                scoreStr = score.toFixed(2) + ' 分';
+                trackScoresForUpload[track] = { time: pb, score: score };
+            }
+            const row = document.createElement('div');
+            row.className = 'score-row';
+            row.innerHTML = '<span>' + track + '</span><span><span style="color:#aaa;">标准 ' + standard + 's | PB ' + (pb !== null ? pb.toFixed(2) + 's' : '--') + '</span><span style="color:var(--primary); margin-left:10px; font-weight:bold;">' + scoreStr + '</span></span>';
+            list.appendChild(row);
+        });
+
+        const totalRow = document.createElement('div');
+        totalRow.className = 'score-row total';
+        totalRow.innerHTML = '<span>赛季总分</span><span>' + totalScore.toFixed(2) + ' 分</span>';
+        list.appendChild(totalRow);
+
+        // 上传赛季总分到云端
+        const uploadStatusEl = document.getElementById('season-upload-status');
+        if (playerState.isLoggedIn) {
+            uploadStatusEl.innerHTML = '<div style="color:var(--warning);">☁️ 正在上传赛季总分...</div>';
+            uploadSeasonPBToCloud(totalScore, trackScoresForUpload, seasonState.totalDays).then(result => {
+                if (result && result.updated) {
+                    uploadStatusEl.innerHTML = '<div style="color:var(--success);">🏆 赛季总分已上传云端！赛季排名: #' + (result.rank || '?') + ' / ' + (result.total_players || '?') + ' 人</div>';
+                    showToast('🏆 赛季总分 PB 已上传！排名第 ' + (result.rank || '?') + ' 名', 'success');
+                } else if (result && !result.updated) {
+                    uploadStatusEl.innerHTML = '<div style="color:#888;">☁️ 云端已有更好的赛季成绩 (最佳: ' + result.best_score.toFixed(2) + ' 分)</div>';
+                } else {
+                    uploadStatusEl.innerHTML = '<div style="color:var(--danger);">⚠️ 上传失败，成绩仅保存在本地</div>';
+                }
+            });
+        } else {
+            uploadStatusEl.innerHTML = '<div style="color:#888;">💡 <a href="#" onclick="exitSeason(); setTimeout(function(){document.getElementById(\'username-input\').focus();}, 300);" style="color:var(--primary);">登入账号</a>后可上传赛季总分至云端排行榜</div>';
+        }
+    }
+
+    function resetSeason() {
+        if (!confirm('确定要重置整个赛季数据吗？')) return;
+        seasonState = { day: 1, totalDays: 8, remLaps: 100, bestTimes: {}, dayResults: {}, savedAllocation: {} };
+        generateDefaultAllocation();
+        document.getElementById('season-summary-area').style.display = 'none';
+        document.getElementById('season-setup-area').style.display = 'block';
+        document.getElementById('season-upload-status').innerHTML = '';
+        renderSeasonTrackGrid();
+        updateSeasonHeader();
+    }
+
+    // ═══════════════════════════════════════════════
+    // 初始化
+    // ═══════════════════════════════════════════════
+    function init() {
+        loadPlayerState();
+        updatePlayerUI();
+        updatePBDisplay();
+        // 回车键登录
+        document.getElementById('username-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') handleAuth();
+        });
+    }
+
+    init();
+    </script>
+</body>
+</html>
