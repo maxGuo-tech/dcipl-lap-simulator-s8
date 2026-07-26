@@ -855,8 +855,8 @@
     // ═══════════════════════════════════════════════
     // 🔧 Supabase 配置 — 部署时改成你自己的（共2个值）
     // ═══════════════════════════════════════════════
-    const SUPABASE_URL = 'https://edwrgzguymkdjrlzkdkq.supabase.co/rest/v1/';
-    const SUPABASE_KEY = 'sb_publishable_-EDlqBdkk8fc-uJrm6D7wg_OlnK0qmY'; 
+    const SUPABASE_URL = 'https://edwrgzguymkdjrlzkdkq.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkd3Jnemd1eW1rZGpybHprZGtxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk4NTU1MiwiZXhwIjoyMTAwNTYxNTUyfQ.0F3fB843vsqtGFU8ewNn7Bia-_K4v5QCIWwR6sGUx-4'; 
 
     // Supabase REST API 封装（原生 fetch，不依赖任何库）
     async function supabaseCall(path, method = 'GET', body = null) {
